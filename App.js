@@ -1,19 +1,18 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { Component } from 'react';
+import { Text, StyleSheet, Button } from 'react-native';
+import { Scene, Router, Actions, Stack } from 'react-native-router-flux';
+// import Home from './components/Home';
+import Calculator from './components/Calculator';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-    </View>
-  );
+export default class App extends Component {
+  render() {
+    return (
+      <Router>
+        <Stack>
+          {/* <Scene key="home" component={Home} /> */}
+            <Scene key="calculate" component={Calculator} />
+        </Stack>
+      </Router>
+    );
+  }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

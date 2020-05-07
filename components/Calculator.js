@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Text, StyleSheet, View, TouchableOpacity, Platform,  Alert } from 'react-native';
+import { abs } from 'react-native-reanimated';
 // import { Scene, Router, Actions, Stack } from 'react-native-router-flux';
 
 class Calculator extends Component {
@@ -58,8 +59,8 @@ class Calculator extends Component {
     if(!this.state.timeCalculator){
       Alert.alert(
       `Time Calculation`,
-      `Please convert your time to the following decimal format: 
-      ${"\n"}5 Hours and 33 Minutes, would be 5.33`)
+      `Please convert your time to the following format: 
+      ${"\n"}5 Hours and 33 Minutes, would be 5:33`)
     }
   }
 
@@ -74,12 +75,12 @@ class Calculator extends Component {
     }
     if(this.state.timeCalculator === false){
 
-      if(type === "decimal" && this.state.decimal === null) {
+      if(type === "decimal" && this.state.decimal === null && this.state.operator === null) {
         this.setState({
           decimal: '.'
         })
       }
-      // console.log(this.state.currentNumber + "." + value)
+      // console.log(this.state.decimal)
     if(this.state.currentNumber === "" && this.state.operator === null && type === "number"){
       this.setState({
         currentNumber: value,
@@ -140,7 +141,7 @@ class Calculator extends Component {
       })
     } 
 
-    if(type === "decimal" && this.state.nextDecimal === null) {
+    if(type === "decimal" && this.state.nextDecimal === null && this.state.operator !== null) {
       this.setState({
         nextDecimal: '.'
       })
@@ -150,20 +151,21 @@ class Calculator extends Component {
       this.setState({
         nextNumber: value
       })
-    } else if(type === "number" && this.state.operator !== null && this.state.nextNumber !== "" && this.state.nextDecimal === null && this.state.decimal === ".") {
+    } else if(type === "number" && this.state.operator !== null && this.state.nextNumber !== "" && this.state.nextDecimal === null) {
+      // console.log(this.state.nextDecNum, "Next DecNum")
       this.setState({
-        nextNumber: (this.state.nextNumber * 10) + value,
-        nextDecNum: 1
+        nextNumber: (this.state.nextNumber * 10) + value
       })
-    } else if(type === "number" && this.state.operator !== null && this.state.nextDecimal === "." && this.state.decimal === "." && this.state.nextDecNum === 1){
+    } else if(type === "number" && this.state.operator !== null && this.state.nextDecimal === "." && this.state.nextDecNum === ""){
+      // console.log(this.state.nextDecNum, "Next DecNum")
       this.setState({
         nextNumber: this.state.nextNumber + (value/10),
-        nextDecNum: 2
+        nextDecNum: 1
       })
-    } else if(type === "number" && this.state.operator !== null && this.state.nextNumber !== "" && this.state.decimal === "." && this.state.nextDecimal === "." && this.state.nextDecNum === 2) {
+    } else if(type === "number" && this.state.operator !== null && this.state.nextNumber !== "" && this.state.nextDecimal === "." && this.state.nextDecNum === 1) {
       this.setState({
         nextNumber: this.state.nextNumber + (value/100),
-        nextDecNum: 3
+        nextDecNum: 2
       })
     } else if(type === "number" && this.state.operator !== null && this.state.nextNumber !== "" && this.state.nextDecimal === "." && this.state.nextDecNum === 2) {
       this.setState({
@@ -240,7 +242,7 @@ class Calculator extends Component {
       this.setState({
         nextHour: (value * 60)
       })
-    } else if(this.state.nextHour !== "" && this.state.nextMins === 0 && this.state.operator !== null && type === "number" && this.state.nextDecimal === null && this.state.decimal !== null) {
+    } else if(this.state.nextHour !== "" && this.state.nextMins === 0 && this.state.operator !== null && type === "number" && this.state.nextDecimal === null) {
       this.setState({
         nextHour: (this.state.nextHour * 10) + (value * 60)
       })
@@ -288,6 +290,7 @@ class Calculator extends Component {
           answer: (this.state.currentNumber / this.state.nextNumber)
         })
       }
+      this.handleHistory()
     }
   } else if (this.state.timeCalculator === true){
     if(this.state.operator !== null){
@@ -310,6 +313,11 @@ class Calculator extends Component {
         if((this.state.currentMins - this.state.nextMins) > 60) {
           this.setState({
             timeAnswer: ((this.state.currentHour - this.state.nextHour)/60) - 1
+          })
+        } else if (this.state.currentMins < this.state.nextMins) {
+          this.setState({
+            timeAnswer: (((this.state.currentHour - this.state.nextHour)/60) - 1 > 0 ? ((this.state.currentHour - this.state.nextHour)/60)-1 : ((this.state.currentHour - this.state.nextHour)/60)),
+            minAnswer: Math.abs(this.state.currentMins - this.state.nextMins)
           })
         }
         // this.handleHistory()
@@ -381,7 +389,7 @@ handleHistory = () => {
             { this.state.timeCalculator 
             ? 
             <Text style={styles.calScreenSmallText}>
-              {this.state.currentHour/60} hours {this.state.decimal} {this.state.currentMins} mins {this.state.operator} {this.state.nextHour/60} hours {this.state.decimal} {this.state.nextMins} mins
+              {this.state.currentHour/60} hours {this.state.decimal ? `:` : null}{/*this.state.decimal*/} {this.state.currentMins} mins {this.state.operator} {this.state.nextHour/60} hours {this.state.decimal && this.state.nextMins ? `:` : null}{/*this.state.decimal*/} {this.state.nextMins} mins
             </Text>
             :
             <Text style={styles.calScreenSmallText}>
@@ -468,7 +476,7 @@ handleHistory = () => {
               style={styles.operators}
               onPress={() => this.handlePress("decimal", ".")}
             >
-              <Text style={styles.calText}>.</Text>
+              <Text style={styles.calText}>{this.state.timeCalculator ? `:` : `.` }</Text>
           </TouchableOpacity>
             <TouchableOpacity
               style={styles.operators}
@@ -501,13 +509,13 @@ handleHistory = () => {
               <Text style={styles.calText}>=</Text>
           </TouchableOpacity>
           <TouchableOpacity
-              style={styles.timeCalButton}
+              style={this.state.timeCalculator ? styles.timeCalButton : styles.timeCalButton2}
               onPress={() => this.handelTimeCalculation()}
             >
               <Text style={styles.calText}>{this.state.timeCalculator ? "Time Calculator Off" : "Time Calculator On"}</Text>
           </TouchableOpacity>
           <View style={styles.historyView}>
-          <Text style={styles.historyTitle}>History:</Text>
+          <Text style={styles.historyTitle}>History</Text>
             <Text style={styles.history}>
             {/* <Text>{this.state.historyArray}</Text>
             {console.log(this.state.historyArray[0])} */}
@@ -554,6 +562,8 @@ const styles = StyleSheet.create({
   historyTitle: {
     justifyContent: 'center',
     textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 20,
   },
   historyView: {
     display: 'flex',
@@ -590,62 +600,77 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   calScreen: {
-    maxWidth: 420,
-    width: Platform === "ios" ? 420 : 400,
-    height: 100,
+    maxWidth: 430,
+    width: Platform === "ios" ? 430 : 430,
+    height: 120,
     backgroundColor: '#000',
     fontSize: 30,
     padding: 10,
     alignItems: 'flex-end',
-    marginTop: 1,
+    marginTop: 0,
     color: '#ffffff',
   },
   equals: {
+    borderRadius: 5,
     alignItems: "center",
     backgroundColor: "#DDDDDD",
     padding: 10,
     margin: 4,
-    width: 400,
+    width: 410,
     height: 50,
-    backgroundColor: '#26A69A',
+    backgroundColor: '#b2ebf2',
     color: '#ffffff',
   },
-  timeCalButton: {
+  timeCalButton2: {
+    borderRadius: 5,
     alignItems: "center",
     backgroundColor: "#039BE5",
     padding: 10,
     margin: 4,
-    width: 400,
+    width: 410,
     height: 50,
-    backgroundColor: '#26A69A',
+    backgroundColor: '#b2ebf2',
+    color: '#ffffff',
+  },
+  timeCalButton: {
+    borderRadius: 5,
+    alignItems: "center",
+    backgroundColor: "#039BE5",
+    padding: 10,
+    margin: 3,
+    width: 410,
+    height: 50,
+    backgroundColor: '#82b1ff',
     color: '#ffffff',
   },
   zero: {
+    borderRadius: 5,
     alignItems: "center",
-    backgroundColor: "#FB8C00",
+    backgroundColor: "#b2ebf2",
     padding: 10,
-    margin: 4,
-    width: 400,
+    margin: 3,
+    width: 410,
     height: 50,
+    color: '#fff'
   },
   button: {
+    borderRadius: 5,
     alignItems: "center",
-    backgroundColor: "#FB8C00",
+    backgroundColor: "#b2ebf2",
     padding: 10,
-    margin: 4,
-    width: 128,
+    margin: 3,
+    width: 132,
     height: 50,
-    color: '#fff',
     borderColor: '#000',
   },
   operators: {
+    borderRadius: 5,
     alignItems: "center",
-    backgroundColor: "#FF5722",
+    backgroundColor: "#ffee58",
     padding: 10,
-    margin: 4,
-    width: 128,
+    margin: 3,
+    width: 132,
     height: 50,
-    color: '#fff',
     borderColor: '#000',
   },
   countContainer: {
@@ -662,5 +687,6 @@ const styles = StyleSheet.create({
   },
   calText: {
     fontSize: 20,
+    color: '#000'
   }
 });
